@@ -1,7 +1,6 @@
 #!/bin/bin/env python
 __author__ = "Pierre Van Hauwaert"
 
-from copy import copy
 import os
 import pyvista as pv
 from loguru import logger as log
@@ -16,13 +15,14 @@ def convertToVTP(filePath, save=False, triangulate=False):
     # meshio_extentions = [".obj"]
     pyvista_extentions = [
         ".vtp",
-        ".vtk",
+        # ".vtk",
         ".stl",
         ".ply",
         # ".vtu"
     ]
     if file_extension == ".tria":
         import toolspampero.preprocessing.converters.GridProSurfaceIO as GridProSurfaceIO
+
         pv_surf_mesh = GridProSurfaceIO.getPolyDataFromGPSurfaceFile(filePath, cleanPolyData=True)
         print(pv_surf_mesh)
     # elif file_extension in meshio_extentions:
@@ -71,7 +71,7 @@ def pv2sparta(filePathIn, filePathOut, triangulate=False, display=False):
         np.savetxt(fout, toWrite, fmt="%s %s %s %s")
         countTriaTh = mesh.faces.shape[0]
         countTriaReal = mesh.n_faces * 4
-        if (countTriaReal != countTriaTh):
+        if countTriaReal != countTriaTh:
             raise ValueError(f"Expect {mesh.n_faces} to be triangles but {mesh.faces.shape[0]/4} should be stored")
             # TODO check actual for all cells, one by one comparing with
             # https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html
@@ -82,12 +82,12 @@ def pv2sparta(filePathIn, filePathOut, triangulate=False, display=False):
         np.savetxt(fout, np.concatenate((triaIndexesStr, conn), axis=1), fmt="%s %s %s %s")
     log.info("checking edges being manifold ...")
     edges = mesh.extract_feature_edges(feature_angle=30, boundary_edges=True, non_manifold_edges=True, feature_edges=False, manifold_edges=False, progress_bar=False)
-    if edges.n_cells != 0 :
+    if edges.n_cells != 0:
         log.info(edges)
     if display:
         p = pv.Plotter()
         p.add_mesh(mesh, opacity=0.3, color="green", show_edges=False, label="surface")
-        if edges.n_cells != 0 :
+        if edges.n_cells != 0:
             p.add_mesh(edges, opacity=1, color="red", show_edges=True, label="edges")
         p.show_axes()
         p.show_bounds()
@@ -96,11 +96,11 @@ def pv2sparta(filePathIn, filePathOut, triangulate=False, display=False):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Convert surface (vtp, tria (GP), vtk, stl) surface file to sparta surface format (.ss)', formatter_class=RawTextHelpFormatter)
-    parser.add_argument("input", help="list of .vtp and/or .vtu files", type=str)
+    parser = argparse.ArgumentParser(description="Convert surface (vtp, tria (GP), vtk, stl) surface file to sparta surface format (.ss)", formatter_class=RawTextHelpFormatter)
+    parser.add_argument("input", help="surface input file", type=str)
     parser.add_argument("-o", "--outputName", help="tag prefix for output", type=str, default=None)
-    parser.add_argument("-d", "--display", help="vizualise the results on-the-fly" , action="store_true")
-    parser.add_argument("-t", "--triangulate", help="triangulate input", action='store_true')
+    parser.add_argument("-d", "--display", help="vizualise the results on-the-fly", action="store_true")
+    parser.add_argument("-t", "--triangulate", help="triangulate input", action="store_true")
     args = parser.parse_args()
 
     # if args.sizeOfTheExtrusionLayer <= 0 :
@@ -108,19 +108,15 @@ def main():
     if not os.path.exists(args.input):
         raise Exception(f"Could not find {args.input}")
     if args.outputName is None:
-        filename, file_extension = os.path.splitext(args.input)
+        # filename, file_extension = os.path.splitext(args.input)
         outputName = os.path.join("output.ss")
         log.info(f"outputName is undefined, so outputName={outputName} shall be used")
     else:
         outputName = args.outputName
     pv2sparta(
-        filePathIn=args.input,
-        filePathOut=outputName,
-        triangulate=args.triangulate,
-        display=args.display,
+        filePathIn=args.input, filePathOut=outputName, triangulate=args.triangulate, display=args.display,
     )
 
 
 if __name__ == "__main__":
     main()
-
