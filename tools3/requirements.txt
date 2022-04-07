@@ -1,0 +1,17 @@
+matplotlib
+numpy
+pandas
+pillow
+openpyxl
+meshio
+plotly
+progress
+xlrd
+xlsxwriter
+xlwt
+xvfbwrapper
+vtk
+xlutils
+pyvista>=0.34
+tqdm
+configargparse
