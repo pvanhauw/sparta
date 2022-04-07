@@ -76,11 +76,7 @@ class sparta:
         else:
             return None
         ptr = self.lib.sparta_extract_global(self.spa, name)
-        # if type == 0:
-        #     return int(ptr)
-        # elif type == 1:
-        #     return float(ptr)
-        return ptr
+        return ptr[0]
 
     def extract_compute(self, id, style, type):
         if type == 0:
