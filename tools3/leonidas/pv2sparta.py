@@ -103,12 +103,9 @@ def main():
     parser.add_argument("-t", "--triangulate", help="triangulate input", action="store_true")
     args = parser.parse_args()
 
-    # if args.sizeOfTheExtrusionLayer <= 0 :
-    #     raise Exception(f"sizeOfTheExtrusionLayer shall be > 0 but is {args.sizeOfTheExtrusionLayer}")
     if not os.path.exists(args.input):
         raise Exception(f"Could not find {args.input}")
     if args.outputName is None:
-        # filename, file_extension = os.path.splitext(args.input)
         outputName = os.path.join("output.ss")
         log.info(f"outputName is undefined, so outputName={outputName} shall be used")
     else:

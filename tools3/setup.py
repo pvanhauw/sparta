@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
     Setup file for leonidas.
-
 """
 
 import io
@@ -74,6 +73,7 @@ setup(
     entry_points={
         "console_scripts": [
             "pv2sparta = leonidas.pv2sparta:main",
+            "log2csv = leonidas.pizza.olog:main",
         ]
     },
     tests_require=tests_require,

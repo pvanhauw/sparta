@@ -7,6 +7,17 @@
 # the GNU General Public License.
 
 # olog tool
+# Imports and external programs
+from loguru import logger as log
+from argparse import RawTextHelpFormatter
+import argparse
+import sys
+import glob
+import os
+from os import popen
+import pandas as pd
+import numpy as np
+from tables import Column
 
 oneline = "Read other log files (ChemCell, SPPARKS, SPARTA) and extract time-series data"
 
@@ -35,6 +46,7 @@ o.write("file.txt","A","B",...)      write listed vectors to a file
 # History
 #   1/06, Steve Plimpton (SNL): original version
 #   2/09, modified to allow different firststr for different log files
+#   4/22, Pierre Van Hauwaert: port to python3 
 
 # ToDo list
 
@@ -46,10 +58,6 @@ o.write("file.txt","A","B",...)      write listed vectors to a file
 #   data[i][j] = 2d array of floats, i = 0 to # of entries, j = 0 to nvecs-1
 #   firststr = string that begins a time-series section in log file
 
-# Imports and external programs
-
-import sys, re, glob
-from os import popen
 
 try:
     tmp = PIZZA_GUNZIP
@@ -63,26 +71,26 @@ class olog:
 
     # --------------------------------------------------------------------
 
-    def __init__(self, *list):
+    def __init__(self, *inputList):
         self.nvec = 0
         self.names = []
         self.ptr = {}
         self.data = []
         self.firststr = "Step"
         self.ave = 0
-
+    
         # flist = list of all log file names
 
-        words = list[0].split()
+        words = inputList[0].split()
         self.flist = []
         for word in words:
             self.flist += glob.glob(word)
-        if len(self.flist) == 0 and len(list) == 1:
+        if len(self.flist) == 0 and len(inputList) == 1:
             raise Exception("no log file specified")
 
-        if len(list) > 1 and len(list[1]):
-            self.firststr = list[1]
-        if len(list) == 3:
+        if len(inputList) > 1 and len(inputList[1]):
+            self.firststr = inputList[1]
+        if len(inputList) == 3:
             self.ave = 1
 
         self.read_all()
@@ -105,13 +113,14 @@ class olog:
         # if average, call self.average()
 
         if self.ave == 0:
-            self.data.sort(self.compare)
+            # self.data.sort(self.compare)
+            self.data = sorted(self.data, key=lambda x : x[0])  # TODO check is 2to3 is OK
             self.cull()
         else:
             self.average()
 
         self.nlen = len(self.data)
-        print("read %d log entries" % self.nlen)
+        log.info("read %d log entries" % self.nlen)
 
     # --------------------------------------------------------------------
 
@@ -146,6 +155,13 @@ class olog:
             return vecs
 
     # --------------------------------------------------------------------
+
+    def writeCsv(self, filename):
+        array = np.array(self.data)
+        columns = [x for x in self.ptr]
+        df = pd.DataFrame(array, columns=columns)
+        log.info(f"writing to: {filename}")
+        df.to_csv(filename, index=False)
 
     def write(self, filename, *keys):
         if len(keys):
@@ -247,10 +263,11 @@ class olog:
         # read entire (rest of) file into txt
 
         file = list[0]
+        log.info(f"read {file}")
         if file[-3:] == ".gz":
-            f = popen("%s -c %s" % (PIZZA_GUNZIP, file), "rb")
+            f = popen("%s -c %s" % (PIZZA_GUNZIP, file), "r")
         else:
-            f = open(file, "rb")
+            f = open(file, "r")
 
         if len(list) == 2:
             f.seek(list[1])
@@ -310,11 +327,36 @@ class olog:
             lines = chunk.split("\n")
             for line in lines:
                 words = line.split()
-                self.data.append(list(map(float, words)))
+                words = [float(x) for x in words]
+                self.data.append(words)
 
             # print last timestep of chunk
-
-            print(int(self.data[len(self.data) - 1][0]), end=" ")
+            # print(int(self.data[len(self.data) - 1][0]), end=" ")
+            print(int(self.data[len(self.data) - 1][0]))
             sys.stdout.flush()
 
         return eof
+
+def main():
+    parser = argparse.ArgumentParser(description="read sparta log and save as csv", formatter_class=RawTextHelpFormatter)
+    # parser.add_argument("input", help="surface input file", type=str)
+    parser.add_argument("input", help="surface input file", nargs='+', default=[])
+    parser.add_argument("-o", "--outputName", help="tag prefix for output", type=str, default=None)
+    # TODO add keyword parsing
+    args = parser.parse_args()
+
+    if args.outputName is None:
+        outputName = os.path.join("log.csv")
+        log.info(f"outputName is undefined, so outputName={outputName} shall be used")
+    else:
+        outputName = args.outputName
+    log.info(" ".join(args.input))
+    lg = olog(" ".join(args.input))
+    lg.writeCsv(outputName)
+
+
+if __name__ == "__main__":
+    main()
+    # paths = glob.glob("/home/pierre/workspace/sparta/examples/adapt/log.*")
+    # lg = olog(" ".join(paths))
+
