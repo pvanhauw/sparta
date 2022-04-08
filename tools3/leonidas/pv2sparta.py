@@ -76,6 +76,7 @@ def pv2sparta(filePathIn, filePathOut, triangulate=False, display=False):
             # TODO check actual for all cells, one by one comparing with
             # https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html
         conn = mesh.faces.reshape(-1, 4)[:, 1:]
+        conn += 1
         triaIndexesStr = np.arange(start=0 + offset, stop=mesh.n_faces + offset, dtype=int).reshape(-1, 1).astype(str)
         log.info(f"Writing {mesh.n_cells} triangles ...")
         fout.write("\nTriangles\n\n")
