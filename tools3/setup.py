@@ -74,6 +74,9 @@ setup(
         "console_scripts": [
             "pv2sparta = leonidas.pv2sparta:main",
             "log2csv = leonidas.pizza.olog:main",
+            "surf2pvd = leonidas.surf2pvd:main",
+            "surf2paraview = leonidas.paraview.surf2paraview:main",
+            "grid2paraview = leonidas.paraview.grid2paraview:main",
         ]
     },
     tests_require=tests_require,
