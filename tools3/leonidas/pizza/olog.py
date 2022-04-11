@@ -162,7 +162,7 @@ class olog:
         df = pd.DataFrame(array, columns=columns)
         log.info(f"writing to: {filename}")
         df.to_csv(filename, index=False)
-        # print(df)
+        print(df)
         print(df.describe())
 
     def write(self, filename, *keys):

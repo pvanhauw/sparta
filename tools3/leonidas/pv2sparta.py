@@ -15,16 +15,18 @@ def convertToVTP(filePath, save=False, triangulate=False):
     # meshio_extentions = [".obj"]
     pyvista_extentions = [
         ".vtp",
-        # ".vtk",
+        ".vtk",
         ".stl",
         ".ply",
-        # ".vtu"
+        ".vtu"
     ]
-    if file_extension == ".tria":
+    gridpro_extentions = [
+        ".tria",
+        ".quad",
+    ]
+    if file_extension in gridpro_extentions:
         import toolspampero.preprocessing.converters.GridProSurfaceIO as GridProSurfaceIO
-
         pv_surf_mesh = GridProSurfaceIO.getPolyDataFromGPSurfaceFile(filePath, cleanPolyData=True)
-        print(pv_surf_mesh)
     # elif file_extension in meshio_extentions:
     #     import meshio
     #     import tempfile
@@ -38,6 +40,7 @@ def convertToVTP(filePath, save=False, triangulate=False):
         raise Exception("extension %s is not handle %s" % (file_extension, filePath))
     pv_surf_mesh = pv_surf_mesh.extract_surface()
     if triangulate:
+        log.info("triangulate")
         pv_surf_mesh_tria = pv_surf_mesh.triangulate()
         pv_surf_mesh_tria = pv_surf_mesh_tria.clean()
     else:
@@ -51,9 +54,14 @@ def convertToVTP(filePath, save=False, triangulate=False):
 
 
 def pv2sparta(filePathIn, filePathOut, triangulate=False, display=False):
-    log.info(f"Reading {filePathIn} ...")
-    mesh = pv.read(filePathIn)
-    log.info(f"Writing {filePathOut} ...")
+    # log.info(f"Reading {filePathIn} ...")
+    mesh = convertToVTP(filePathIn, save=False, triangulate=triangulate)
+    xmin, xmax, ymin, ymax, zmin, zmax = mesh.bounds
+    log.info(f"x Bounds : [{xmin} , {xmax}]")
+    log.info(f"y Bounds : [{ymin} , {ymax}]")
+    log.info(f"z Bounds : [{zmin} , {zmax}]")
+    # mesh = pv.read(filePathIn)
+    log.info(f"Writing: {filePathOut}")
     with open(filePathOut, "w") as fout:
         sep = " "
         fout.write(f"# SPARTA surface file, from input file {filePathIn}\n\n")
@@ -72,7 +80,7 @@ def pv2sparta(filePathIn, filePathOut, triangulate=False, display=False):
         countTriaTh = mesh.faces.shape[0]
         countTriaReal = mesh.n_faces * 4
         if countTriaReal != countTriaTh:
-            raise ValueError(f"Expect {mesh.n_faces} to be triangles but {mesh.faces.shape[0]/4} should be stored")
+            raise ValueError(f"Expect {mesh.n_faces} to be triangles but {mesh.faces.shape[0]/4} should be stored. Use the --triangulate option")
             # TODO check actual for all cells, one by one comparing with
             # https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html
         conn = mesh.faces.reshape(-1, 4)[:, 1:]
@@ -84,7 +92,7 @@ def pv2sparta(filePathIn, filePathOut, triangulate=False, display=False):
     log.info("checking edges being manifold ...")
     edges = mesh.extract_feature_edges(feature_angle=30, boundary_edges=True, non_manifold_edges=True, feature_edges=False, manifold_edges=False, progress_bar=False)
     if edges.n_cells != 0:
-        log.info(edges)
+        log.error(edges)
     if display:
         p = pv.Plotter()
         p.add_mesh(mesh, opacity=0.3, color="green", show_edges=False, label="surface")
