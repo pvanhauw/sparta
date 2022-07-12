@@ -44,10 +44,10 @@ fix                 check grid/check 1 error
 
 timestep 	    0.0001
 
-dump                2 image all 100 image.*.ppm type type pdiam 0.05 &
-                    size 1024 1024 zoom 1.75 grid proc sline yes 0.005 &
-                    # surf proc 0.004 
-dump_modify	    2 pad 5
+#dump                2 image all 100 image.*.ppm type type pdiam 0.05 &
+#                    size 1024 1024 zoom 1.75 grid proc sline yes 0.005 &
+#                    # surf proc 0.004 
+#dump_modify	    2 pad 5
 
 fix                 bal balance 100 1.001 rcb part
 
@@ -55,4 +55,6 @@ stats		    100
 stats_style	    step cpu np nattempt ncoll nscoll nscheck &
                     f_bal f_bal[2] f_ablate
 
-run                 20000
+# run 10-20x longer for a better movie
+
+run                 500
