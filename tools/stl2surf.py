@@ -120,6 +120,7 @@ print("# of triangles in SPARTA file:",len(tris))
 ehash = {}
 dup = 0
 unmatch = 0
+dupedge = 0
 
 for vert3 in triverts:
   edge = (vert3[0],vert3[1])
