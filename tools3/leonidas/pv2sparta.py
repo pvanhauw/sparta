@@ -90,8 +90,9 @@ def pv2sparta(filePathIn, filePathOut, triangulate=False, display=False):
         fout.write("\nTriangles\n\n")
         np.savetxt(fout, np.concatenate((triaIndexesStr, conn), axis=1), fmt="%s %s %s %s")
     log.info("checking edges being manifold ...")
-    edges = mesh.extract_feature_edges(feature_angle=30, boundary_edges=True, non_manifold_edges=True, feature_edges=False, manifold_edges=False, progress_bar=False)
+    edges = mesh.extract_feature_edges(feature_angle=180, boundary_edges=True, non_manifold_edges=True, feature_edges=False, manifold_edges=False, progress_bar=False)
     if edges.n_cells != 0:
+        log.error(f"found {edges.n_cells} edges")
         log.error(edges)
     if display:
         p = pv.Plotter()
