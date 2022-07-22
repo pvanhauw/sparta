@@ -95,7 +95,7 @@ def createVtp(pvMesh, dfData, outputpathVtp):
 def convertMesh(mesh, path, headerRow, pvDir, odg, outputName, i):
     names = getListOfVariables(path=path, headerRow=headerRow)
     df = pd.read_csv(path, sep="\s+", skiprows=headerRow, names=names)
-    outputpathVtp = os.path.join(pvDir, f"{outputName}%0*d.vtp" % (odg, i))
+    outputpathVtp = os.path.join(pvDir, f"{outputName}_%0*d.vtp" % (odg, i))
     createVtp(pvMesh=mesh, dfData=df, outputpathVtp=outputpathVtp)
 
 
@@ -134,7 +134,7 @@ def surf2pvd(sdataPathIn, listResultsFilePaths, outputName, numberOfThreads):
     # pv
     timeStep2VtpDict = {}
     for i, path in enumerate(listResultsFilePaths) :
-        outputpathVtp = os.path.join(pvDir, f"{outputName}%0*d.vtp" % (odg, i))
+        outputpathVtp = os.path.join(pvDir, f"{outputName}_%0*d.vtp" % (odg, i))
         timeStep2VtpDict[getTimeStep(path=path)] = outputpathVtp
     #
     pathPvd = os.path.join(f"{outputName}.pvd")
