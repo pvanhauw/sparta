@@ -7,6 +7,7 @@ from loguru import logger as log
 from argparse import RawTextHelpFormatter
 import argparse
 import numpy as np
+from copy import copy
 
 
 def convertToVTP(filePath, save=False, triangulate=False):
@@ -83,7 +84,7 @@ def pv2sparta(filePathIn, filePathOut, triangulate=False, display=False):
             raise ValueError(f"Expect {mesh.n_faces} to be triangles but {mesh.faces.shape[0]/4} should be stored. Use the --triangulate option")
             # TODO check actual for all cells, one by one comparing with
             # https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html
-        conn = mesh.faces.reshape(-1, 4)[:, 1:]
+        conn = copy(mesh.faces.reshape(-1, 4)[:, 1:])
         conn += 1
         triaIndexesStr = np.arange(start=0 + offset, stop=mesh.n_faces + offset, dtype=int).reshape(-1, 1).astype(str)
         log.info(f"Writing {mesh.n_cells} triangles ...")
