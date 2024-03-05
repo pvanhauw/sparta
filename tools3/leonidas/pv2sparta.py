@@ -46,6 +46,8 @@ def convertToVTP(filePath, save=False, triangulate=False):
         pv_surf_mesh_tria = pv_surf_mesh_tria.clean()
     else:
         pv_surf_mesh_tria = pv_surf_mesh
+    
+
     # pv_surf_mesh_tria.compute_normals(cell_normals=True, point_normals=True, inplace=True)
     # pv_surf_mesh_tria.compute_cell_sizes(area=True)
     if save:
@@ -53,10 +55,44 @@ def convertToVTP(filePath, save=False, triangulate=False):
         pv_surf_mesh_tria.save(filePathOut)
     return pv_surf_mesh_tria
 
+def get_synchonize_normal_mesh(mesh, display=False):
+    # Compute normals without consistent computation
+    normals_no_consistent = mesh.compute_normals(cell_normals=True, point_normals=False, consistent_normals=False, non_manifold_traversal=False)
+    # Compute normals with consistent computation
+    normals_consistent = mesh.compute_normals(cell_normals=True, point_normals=False, consistent_normals=True, non_manifold_traversal=False)
+    if display:
+        pl = pv.Plotter(shape=(1, 2))
+        pl.subplot(0, 0)
+        pl.add_mesh(normals_consistent, scalars="Normals", component=2)
+        pl.subplot(0, 1)
+        pl.add_mesh(normals_no_consistent, scalars="Normals", component=2)
+        pl.link_views()
+    faces = mesh.faces.reshape(-1,4)
+    new_faces = faces.copy()
+    # Compare normals and adjust triangles if necessary
+    count_reverse = 0
+    # TODO: get ride o pythin loop
+    for i in range(mesh.n_cells):
+        nc = np.array(normals_consistent.cell_normals[i])
+        nnc = np.array(normals_no_consistent.cell_normals[i])
+        dot = np.dot(nc, nnc)
+        if dot < 0 :
+            # Invert the triangle vertices for this cell
+            face = faces[i, 1:3]
+            new_faces[i, 1:3] = face[::-1]
+            new_faces[i, 0] = 3
+            count_reverse += 1
+    new_faces = new_faces.ravel()
+    mesh.faces = new_faces
+    log.warning(f"reverse {count_reverse} faces")
+    return mesh 
 
-def pv2sparta(filePathIn, filePathOut, triangulate=False, display=False):
+def pv2sparta(filePathIn, filePathOut, triangulate=False, display=False, synchronize_normals=False):
     # log.info(f"Reading {filePathIn} ...")
     mesh = convertToVTP(filePathIn, save=False, triangulate=triangulate)
+    if synchronize_normals :
+        mesh = get_synchonize_normal_mesh(mesh)
+    # pv_surf_mesh_tria = get_synchonize_normal_mesh(pv_surf_mesh_tria)
     xmin, xmax, ymin, ymax, zmin, zmax = mesh.bounds
     log.info(f"x Bounds : [{xmin} , {xmax}]")
     log.info(f"y Bounds : [{ymin} , {ymax}]")
@@ -75,18 +111,16 @@ def pv2sparta(filePathIn, filePathOut, triangulate=False, display=False):
         toWrite = np.concatenate((pointsIndexesStr, pointsStr), axis=1)
         log.info(f"Writing {mesh.n_points} points ...")
         fout.write("\nPoints\n\n")
-        # toWrite = np.concatenate((pointsIndexes, mesh.points), axis=1)
-        # np.savetxt(fout, toWrite, fmt="%d %lf %lf %lf")
         np.savetxt(fout, toWrite, fmt="%s %s %s %s")
         countTriaTh = mesh.faces.shape[0]
-        countTriaReal = mesh.n_faces * 4
+        countTriaReal = mesh.n_cells * 4
         if countTriaReal != countTriaTh:
-            raise ValueError(f"Expect {mesh.n_faces} to be triangles but {mesh.faces.shape[0]/4} should be stored. Use the --triangulate option")
+            raise ValueError(f"Expect {mesh.n_cells} to be triangles but {mesh.faces.shape[0]/4} should be stored. Use the --triangulate option")
             # TODO check actual for all cells, one by one comparing with
             # https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html
         conn = copy(mesh.faces.reshape(-1, 4)[:, 1:])
         conn += 1
-        triaIndexesStr = np.arange(start=0 + offset, stop=mesh.n_faces + offset, dtype=int).reshape(-1, 1).astype(str)
+        triaIndexesStr = np.arange(start=0 + offset, stop=mesh.n_cells + offset, dtype=int).reshape(-1, 1).astype(str)
         log.info(f"Writing {mesh.n_cells} triangles ...")
         fout.write("\nTriangles\n\n")
         np.savetxt(fout, np.concatenate((triaIndexesStr, conn), axis=1), fmt="%s %s %s %s")
@@ -112,17 +146,21 @@ def main():
     parser.add_argument("-o", "--outputName", help="tag prefix for output", type=str, default=None)
     parser.add_argument("-d", "--display", help="vizualise the results on-the-fly", action="store_true")
     parser.add_argument("-t", "--triangulate", help="triangulate input", action="store_true")
+    parser.add_argument("-s", "--synchronize_normals", help="use vtk to synchronize the normals", action="store_true")
     args = parser.parse_args()
-
     if not os.path.exists(args.input):
         raise Exception(f"Could not find {args.input}")
     if args.outputName is None:
         outputName = os.path.join("output.ss")
-        log.info(f"outputName is undefined, so outputName={outputName} shall be used")
+        log.warning(f"outputName is undefined, so outputName={outputName} is be used")
     else:
         outputName = args.outputName
     pv2sparta(
-        filePathIn=args.input, filePathOut=outputName, triangulate=args.triangulate, display=args.display,
+        filePathIn=args.input, 
+        filePathOut=outputName, 
+        triangulate=args.triangulate, 
+        display=args.display, 
+        synchronize_normals=args.synchronize_normals
     )
 
 
