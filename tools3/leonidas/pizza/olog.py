@@ -73,7 +73,8 @@ class olog:
         self.names = []
         self.ptr = {}
         self.data = []
-        self.firststr = str("Step CPU")
+        #self.firststr = str("Step CPU")
+        self.firststr = str("Step Dt")
         self.ave = 0
 
         # flist = list of all log file names
