@@ -49,7 +49,7 @@ set(PKG_FFT
     "FFTW3"
     CACHE STRING "")
 set(SPARTA_ENABLE_TESTING
-    "ON"
+    "OFF"
     CACHE BOOL "")
 set(CMAKE_BUILD_TYPE
    "Release"
