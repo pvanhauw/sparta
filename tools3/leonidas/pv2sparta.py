@@ -84,14 +84,34 @@ def get_synchonize_normal_mesh(mesh, display=False):
             count_reverse += 1
     new_faces = new_faces.ravel()
     mesh.faces = new_faces
-    log.warning(f"reverse {count_reverse} faces")
+    if count_reverse > 0:
+        log.warning(f"reverse {count_reverse} faces")
     return mesh 
 
-def pv2sparta(filePathIn, filePathOut, triangulate=False, display=False, synchronize_normals=False):
+def pv2sparta(filePathIn, filePathOut, triangulate=False, display=False, synchronize_normals=False, auto_synch_as_wall=False):
     # log.info(f"Reading {filePathIn} ...")
     mesh = convertToVTP(filePathIn, save=False, triangulate=triangulate)
     if synchronize_normals :
         mesh = get_synchonize_normal_mesh(mesh)
+    if auto_synch_as_wall:
+        if not synchronize_normals:
+            msg = "synchronize_normals shall be enable if auto_synch_as_wall is used"
+            log.error(mesh)
+            raise ValueError(msg)
+        else:
+            face_indices = mesh.faces.reshape(-1, 4)[:, 1:]
+            # Extract the vertices corresponding to each triangle
+            v1 = mesh.points[face_indices[:, 0]]
+            v2 = mesh.points[face_indices[:, 1]]
+            v3 = mesh.points[face_indices[:, 2]]
+            # Compute the cross product of v2 and v3
+            cross_product = np.cross(v2, v3)
+            # Compute the signed volume contributions
+            signed_volumes = np.sum(v1 * cross_product, axis=1) / 6.0
+            # Sum the signed volumes and take the absolute value
+            volume = signed_volumes.sum()
+            if volume < 0:
+                mesh.flip_normals()
     # pv_surf_mesh_tria = get_synchonize_normal_mesh(pv_surf_mesh_tria)
     xmin, xmax, ymin, ymax, zmin, zmax = mesh.bounds
     log.info(f"x Bounds : [{xmin} , {xmax}]")
@@ -147,6 +167,7 @@ def main():
     parser.add_argument("-d", "--display", help="vizualise the results on-the-fly", action="store_true")
     parser.add_argument("-t", "--triangulate", help="triangulate input", action="store_true")
     parser.add_argument("-s", "--synchronize_normals", help="use vtk to synchronize the normals", action="store_true")
+    parser.add_argument("-a", "--auto_synch_as_wall", help="flip the normal so that the geometry will be identified as a wall. synchronize_normals must be enable and the surface must be watertight and manifold", action="store_true")
     args = parser.parse_args()
     if not os.path.exists(args.input):
         raise Exception(f"Could not find {args.input}")
@@ -160,7 +181,8 @@ def main():
         filePathOut=outputName, 
         triangulate=args.triangulate, 
         display=args.display, 
-        synchronize_normals=args.synchronize_normals
+        synchronize_normals=args.synchronize_normals,
+        auto_synch_as_wall=args.auto_synch_as_wall,
     )
 
 
