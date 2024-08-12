@@ -5,7 +5,5 @@
 #cd ~/workspace/sparta/; rm -rf build ; mkdir build ; cd build ; cmake -C ../cmake/presets/mint.cmake -LH -DBUILD_JPEG:BOOL=ON -DBUILD_PNG:BOOL=ON -DCMAKE_BUILD_TYPE:STRING=Release -DSPARTA_ENABLE_TESTING:BOOL=ON  -DPKG_FFT:STRING=FFTW3 -DSPARTA_MACHINE:STRING=mint ../cmake/ ; make -j 16
 
 cd ~/workspace/sparta/; rm -rf build ; mkdir build ; cd build ; cmake mode=shlib -C ../cmake/presets/mint.cmake -LH   ../cmake/ ; make -j 16
-#cd ~/workspace/sparta/; rm -rf build ; mkdir build ; cd build ; cmake mode=shlib -C ../cmake/presets/mpi.cmake -LH   ../cmake/ ; make -j 16
-#cd ~/workspace/sparta/; rm -rf build ; mkdir build ; cd build ; cmake -C ../cmake/presets/kokkos_mint.cmake -LH   ../cmake/ ; make -j 16
-#cd ~/workspace/sparta/; rm -rf build ; mkdir build ; cd build ; cmake -C ../cmake/presets/kokkos_cuda.cmake -LH   ../cmake/ ; make -j 16
+cd ~/workspace/sparta/; rm -rf debug ; mkdir debug ; cd debug ; cmake mode=shlib -C ../cmake/presets/mint_deb.cmake -LH   ../cmake/ ; make -j 16
 

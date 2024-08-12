@@ -7,7 +7,7 @@ set(SPARTA_MACHINE
           "Descriptive string to describe \"spa_\" executable configuration"
           FORCE)
 set(SPARTA_CXX_COMPILE_FLAGS
-    -fPIC
+    -fPIC  -DSPARTA_BIGBIG
     CACHE STRING "Compiler flags use when building .o files for spa_*")
 # ################### END SPARTA OPTIONS ####################
 
