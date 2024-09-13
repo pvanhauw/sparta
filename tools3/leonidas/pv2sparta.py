@@ -44,6 +44,14 @@ def convertToVTP(filePath, save=False, triangulate=False):
         log.info("triangulate")
         pv_surf_mesh_tria = pv_surf_mesh.triangulate()
         pv_surf_mesh_tria = pv_surf_mesh_tria.clean()
+
+        # Identify cells that are not lines
+        non_line_cells = [i for i in range(pv_surf_mesh_tria.n_cells) if pv_surf_mesh_tria.get_cell(i).type != pv.CellType.LINE]
+        # Extract the non-line cells to form a new mesh
+        pv_surf_mesh_tria = pv_surf_mesh_tria.extract_cells(non_line_cells)
+        # Clean the mesh to remove unused points and artifacts
+        pv_surf_mesh_tria = pv_surf_mesh_tria.clean().extract_surface()
+
     else:
         pv_surf_mesh_tria = pv_surf_mesh
     
@@ -72,7 +80,37 @@ def get_synchonize_normal_mesh(mesh, display=False):
     # Compare normals and adjust triangles if necessary
     count_reverse = 0
     # TODO: get ride o pythin loop
+
+
+
+
+
+    log.info(f"synchronize_normals: {mesh.n_cells}")
+
+    # Get the cell types by iterating through each cell in the mesh
+    cell_types = np.array([mesh.get_cell(i).type for i in range(mesh.n_cells)])
+    # Get the unique cell types and their counts using NumPy
+    unique_types, counts = np.unique(cell_types, return_counts=True)
+    # Map PyVista cell types to readable names
+    cell_type_names = {
+        pv.CellType.LINE: "Line",
+        pv.CellType.TRIANGLE: "Triangle",
+        pv.CellType.QUAD: "Quad",
+        pv.CellType.TETRA: "Tetrahedron",
+        pv.CellType.HEXAHEDRON: "Hexahedron",
+        pv.CellType.VOXEL: "Voxel",
+        pv.CellType.POLYGON: "Polygon",
+        pv.CellType.PYRAMID: "Pyramid",
+        pv.CellType.WEDGE: "Wedge",
+        pv.CellType.PIXEL: "Pixel"
+    }
+    # Display the cell type and their counts
+    for cell_type, count in zip(unique_types, counts):
+        cell_name = cell_type_names.get(cell_type, f"Unknown Type ({cell_type})")
+        print(f"{cell_name}: {count}")
+
     for i in range(mesh.n_cells):
+        # log.info(f"synchronize_normals: {i} / {mesh.n_cells}")
         nc = np.array(normals_consistent.cell_normals[i])
         nnc = np.array(normals_no_consistent.cell_normals[i])
         dot = np.dot(nc, nnc)
@@ -91,6 +129,8 @@ def get_synchonize_normal_mesh(mesh, display=False):
 def pv2sparta(filePathIn, filePathOut, triangulate=False, display=False, synchronize_normals=False, auto_synch_as_wall=False):
     # log.info(f"Reading {filePathIn} ...")
     mesh = convertToVTP(filePathIn, save=False, triangulate=triangulate)
+
+
     if synchronize_normals :
         mesh = get_synchonize_normal_mesh(mesh)
     if auto_synch_as_wall:
