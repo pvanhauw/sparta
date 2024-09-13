@@ -917,11 +917,6 @@ class sdata:
           line[1] += npoints_prev
           lines.append(line)
         #for lineflag in obj.lineflags:
-<<<<<<< HEAD
-          #lineflags.append(lineflag)
-=======
-        #  lineflags.append(lineflag)
->>>>>>> a64780dd (modif for pizza not to crash)
       if self.dim == 3:
         for tri in obj.triangles:
           tri[0] += npoints_prev
