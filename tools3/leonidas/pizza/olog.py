@@ -310,7 +310,7 @@ class olog:
 
             lines = chunk.split("\n")
             for line in lines:
-                log.info(line)
+                # log.info(line)
                 words = line.split()
                 self.data.append([float(i) for i in words])
 
@@ -326,9 +326,11 @@ def main():
     # parser.add_argument("input", help="surface input file", type=str)
     parser.add_argument("input", help="sparta log file", nargs='+', default=[])
     parser.add_argument("-o", "--outputName", help="tag prefix for output", type=str, default=None)
+    parser.add_argument('-s', '--silent', action='store_true', help='Run the script in silent mode')
     # TODO add keyword parsing
     args = parser.parse_args()
-
+    if args.silent:
+        log.remove()
     if args.outputName is None:
         outputName = os.path.join("log.csv")
         log.info(f"outputName is undefined, so outputName={outputName} shall be used")
