@@ -478,7 +478,10 @@ template < int NEARCP > void Collide::collisions_one()
 
     ip = cinfo[icell].first;
     volume = cinfo[icell].volume / cinfo[icell].weight;
-    if (volume == 0.0) error->one(FLERR,"Collision cell volume is zero");
+    // if (volume == 0.0) error->one(FLERR,"Collision cell volume is zero");
+    if (volume == 0.0){
+      continue;
+    }
 
     // setup particle list for this cell
 
